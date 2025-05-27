@@ -1,30 +1,48 @@
 # mamkuy_backend/__init__.py
 from pyramid.config import Configurator
-from pyramid.events import NewRequest
-from pyramid.view import view_config
+# Hapus import CORS yang lain seperti pyramid.events, pyramid.view, CorsService
 
-# --- Fungsi untuk menambahkan header CORS ---
-def add_cors_headers(event):
-    event.request.response.headers['Access-Control-Allow-Origin'] = '*' # Atau 'http://localhost:5173'
-    event.request.response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    event.request.response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    event.request.response.headers['Access-Control-Max-Age'] = '3600'
+# --- Ini adalah middleware CORS yang akan membungkus aplikasi WSGI ---
+class CORSMiddleware(object):
+    def __init__(self, app, origins='*', methods='*', headers='*', max_age=3600):
+        self.app = app
+        self.origins = origins
+        self.methods = methods
+        self.headers = headers
+        self.max_age = str(max_age)
 
-# --- View untuk menangani OPTIONS requests (preflight requests) ---
-@view_config(route_name='cors_options', renderer='json', request_method='OPTIONS')
-def cors_options_view(request):
-    return {}
+    def __call__(self, environ, start_response):
+        def _start_response(status, headers, exc_info=None):
+            # Tambahkan header CORS ke semua respons
+            headers.append(('Access-Control-Allow-Origin', self.origins))
+            headers.append(('Access-Control-Allow-Methods', self.methods))
+            headers.append(('Access-Control-Allow-Headers', self.headers))
+            headers.append(('Access-Control-Max-Age', self.max_age))
+
+            # Handle preflight OPTIONS request
+            if environ['REQUEST_METHOD'] == 'OPTIONS':
+                start_response('200 OK', headers)
+                return [] # Langsung akhiri respons untuk OPTIONS
+
+            return start_response(status, headers, exc_info)
+
+        return self.app(environ, _start_response)
 
 def main(global_config, **settings):
+    """ This function returns a Pyramid WSGI application. """
     with Configurator(settings=settings) as config:
-        # HAPUS ATAU KOMENTARI BARIS INI:
-        # config.include('pyramid_jinja2')
-
+        # config.include('pyramid_jinja2') # Hapus jika tidak perlu
         config.include('.routes')
         config.include('.models')
-
-        config.add_subscriber(add_cors_headers, NewRequest)
-        config.add_route('cors_options', '/{catchall:.*}', request_method='OPTIONS')
+        # Hapus semua baris config.add_subscriber, config.add_route('cors_options')
 
         config.scan()
-    return config.make_wsgi_app()
+        app = config.make_wsgi_app()
+
+    # --- BUNGKUS APLIKASI DENGAN MIDDLEWARE CORS ---
+    return CORSMiddleware(
+        app, 
+        origins='*', # Atau 'http://localhost:5173' untuk production
+        methods='GET, POST, PUT, DELETE, OPTIONS',
+        headers='Content-Type, Authorization'
+    )

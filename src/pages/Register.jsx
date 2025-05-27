@@ -9,7 +9,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
   });
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(null); // Untuk menampilkan pesan error
   const [message, setMessage] = useState(''); // Untuk menampilkan pesan sukses
   const navigate = useNavigate();
 
@@ -41,27 +41,34 @@ const Register = () => {
       };
 
       // Panggil API backend untuk membuat user baru
+      // Respons dari Axios (yang kita dapatkan dari console.log) menunjukkan
+      // bahwa data yang diparse sudah berada langsung di objek 'response',
+      // bukan di 'response.data'.
       const response = await userService.createUser(userDataToSend);
 
-      // Log respons dari backend untuk debugging
-      console.log('API Response (raw):', response);
-      console.log('Response data:', response.data);
+      // --- BAGIAN KRUSIAL UNTUK MENYIMPAN KE LOCAL STORAGE ---
+      // Log respons dari backend untuk debugging di konsol browser
+      // Ini akan mencetak objek data JSON langsung
+      console.log('API Response (raw - langsung dari service):', response); 
+      // console.log('Response data (ini akan undefined sekarang):', response.data); // Tidak perlu ini lagi
 
-      // Pastikan backend mengembalikan ID user yang baru dibuat
-      if (response.data && response.data.id) {
-        // Simpan ID user ke Local Storage
-        // Ini krusial agar frontend bisa tahu user siapa yang sedang login
-        localStorage.setItem('userId', response.data.id); 
+      // Akses ID langsung dari objek 'response', bukan 'response.data'
+      // Pastikan objek 'response' ada dan memiliki properti 'id'
+      if (response && response.id) { 
+        const userId = response.id; // <-- Ambil ID langsung dari 'response'
+        localStorage.setItem('userId', userId); // <-- INI CARA MENYIMPAN userId ke localStorage
         
-        console.log('User berhasil didaftarkan, userId disimpan:', response.data.id);
+        // Log untuk verifikasi di konsol browser
+        console.log('User berhasil didaftarkan, userId disimpan di localStorage:', localStorage.getItem('userId'));
         setMessage('Pendaftaran berhasil! Anda akan diarahkan ke halaman login.');
         
         // Arahkan user ke halaman login setelah pendaftaran berhasil dan userId tersimpan
-        navigate('/login');
+        navigate('/login'); 
       } else {
         // Jika backend berhasil (status 2xx) tapi tidak mengembalikan ID
         setError('Pendaftaran berhasil, tetapi ID user tidak diterima dari server.');
-        console.error('Pendaftaran berhasil, tetapi ID user tidak diterima:', response.data);
+        // Log objek 'response' langsung untuk melihat mengapa 'id' tidak ada
+        console.error('Pendaftaran berhasil, tetapi ID user tidak diterima:', response);
       }
 
     } catch (err) {

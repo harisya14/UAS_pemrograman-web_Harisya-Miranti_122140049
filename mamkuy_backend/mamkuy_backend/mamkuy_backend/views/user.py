@@ -40,33 +40,31 @@ def create_user_view(request):
     Membuat entri User baru.
     """
     try:
-        # Validasi input menggunakan schema
-        # load_only=True pada password di schema akan memastikan password tidak di-dump ke output
         validated_data = user_schema.load(request.json_body)
-    except ValidationError as e: # <--- UBAH INI UNTUK MENANGANI VALIDATIONERROR SPESIFIK
+    except ValidationError as e:
         request.response.status_code = 400
-        print("Validation Error Details (CREATE USER):", e.messages) # <--- LOG DETAIL ERROR
-        return {"error": "Data input tidak valid", "details": e.messages} # <--- KEMBALIKAN DETAIL
-
-    except Exception as e: # Tangani error lain yang tidak spesifik validasi Marshmallow
-        request.response.status_code = 400 # Atau 500 jika itu error internal
-        print("Unexpected Error during validation (CREATE USER):", str(e)) # <--- LOG DETAIL ERROR
+        print("Validation Error Details (CREATE USER):", e.messages)
+        return {"error": "Data input tidak valid", "details": e.messages}
+    except Exception as e:
+        request.response.status_code = 400
+        print("Unexpected Error during validation (CREATE USER):", str(e))
         return {"error": "Data input tidak valid (unexpected)", "details": str(e)}
 
     try:
         user = User(**validated_data)
         request.dbsession.add(user)
-        request.dbsession.flush() # Flush untuk mendapatkan ID jika diperlukan segera
-        # Dump objek user yang baru dibuat (tanpa password karena load_only=True)
-        return user_schema.dump(user)
+        request.dbsession.flush() # Penting agar 'user.id' terisi setelah add
+
+        # --- PASTIKAN BARIS INI ADA DAN TIDAK DIKOMENTARI ---
+        return user_schema.dump(user) # Ini akan mengembalikan objek user lengkap dengan ID-nya
+        # --- AKHIR BAGIAN KRUSIAL ---
+
     except IntegrityError:
-        # Menangani error jika ada duplikasi pada kolom UNIQUE (misal: username, email)
-        request.response.status_code = 409 # Conflict
+        request.response.status_code = 409
         return {"error": "Username atau email sudah digunakan"}
     except Exception as e:
-        # Tangani error lain yang mungkin terjadi saat menyimpan ke DB
-        request.response.status_code = 500 # Internal Server Error
-        print("Error saving user to DB:", str(e)) # <--- LOG DETAIL ERROR
+        request.response.status_code = 500
+        print("Error saving user to DB:", str(e))
         return {"error": "Terjadi kesalahan saat membuat user", "details": str(e)}
 
 # --- UPDATE USER ---
