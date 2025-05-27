@@ -1,44 +1,76 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import userService from '../services/userService'; // Import service untuk komunikasi dengan backend
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '', // Sesuaikan dengan field 'username' di backend UserSchema Anda
     email: '',
     password: '',
     confirmPassword: '',
-  })
-  const [error, setError] = useState(null)
-  const navigate = useNavigate()
+  });
+  const [error, setError] = useState(null);
+  const [message, setMessage] = useState(''); // Untuk menampilkan pesan sukses
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
+    setError(null); // Reset error sebelumnya
+    setMessage(''); // Reset pesan sukses sebelumnya
 
-    // Validasi input
+    // Validasi input frontend: Pastikan password cocok
     if (formData.password !== formData.confirmPassword) {
-      setError('Kata sandi tidak cocok')
-      return
+      setError('Kata sandi tidak cocok');
+      return;
     }
 
     try {
-      // Kirim data registrasi ke API (mock sementara)
-      // Misalnya, ganti dengan API call saat backend sudah siap
-      console.log('Data registrasi:', formData)
-      
-      // Simulasi berhasil
-      navigate('/login') // Setelah sukses, redirect ke halaman login
-    } catch (error) {
-      setError('Terjadi kesalahan saat mendaftar')
+      // Data yang akan dikirim ke backend, harus sesuai dengan UserSchema di Pyramid Anda
+      const userDataToSend = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      };
+
+      // Panggil API backend untuk membuat user baru
+      const response = await userService.createUser(userDataToSend);
+
+      // Log respons dari backend untuk debugging
+      console.log('API Response (raw):', response);
+      console.log('Response data:', response.data);
+
+      // Pastikan backend mengembalikan ID user yang baru dibuat
+      if (response.data && response.data.id) {
+        // Simpan ID user ke Local Storage
+        // Ini krusial agar frontend bisa tahu user siapa yang sedang login
+        localStorage.setItem('userId', response.data.id); 
+        
+        console.log('User berhasil didaftarkan, userId disimpan:', response.data.id);
+        setMessage('Pendaftaran berhasil! Anda akan diarahkan ke halaman login.');
+        
+        // Arahkan user ke halaman login setelah pendaftaran berhasil dan userId tersimpan
+        navigate('/login');
+      } else {
+        // Jika backend berhasil (status 2xx) tapi tidak mengembalikan ID
+        setError('Pendaftaran berhasil, tetapi ID user tidak diterima dari server.');
+        console.error('Pendaftaran berhasil, tetapi ID user tidak diterima:', response.data);
+      }
+
+    } catch (err) {
+      // Tangani error dari API (misalnya, status 400 Bad Request, 409 Conflict, atau 500 Internal Server Error)
+      console.error('Terjadi kesalahan saat mendaftar (catch block):', err.response?.data || err.message || err);
+      // Tampilkan pesan error spesifik dari backend jika ada, atau pesan umum
+      setError(err.response?.data?.error || 'Terjadi kesalahan saat mendaftar.');
     }
-  }
+  };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
@@ -46,23 +78,26 @@ const Register = () => {
         <h2 className="text-2xl font-bold mb-4">Daftar Akun</h2>
 
         {error && <div className="text-red-500 mb-4">{error}</div>}
+        {message && <div className="text-green-500 mb-4">{message}</div>}
 
         <form onSubmit={handleSubmit}>
+          {/* Input untuk Username */}
           <div className="mb-4">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Nama
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              Username
             </label>
             <input
               type="text"
-              id="name"
-              name="name"
-              value={formData.name}
+              id="username"
+              name="username" // Pastikan nama ini cocok dengan field di formData
+              value={formData.username}
               onChange={handleChange}
               className="w-full p-2 mt-1 border rounded-md"
               required
             />
           </div>
 
+          {/* Input untuk Email */}
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
@@ -70,7 +105,7 @@ const Register = () => {
             <input
               type="email"
               id="email"
-              name="email"
+              name="email" // Pastikan nama ini cocok dengan field di formData
               value={formData.email}
               onChange={handleChange}
               className="w-full p-2 mt-1 border rounded-md"
@@ -78,6 +113,7 @@ const Register = () => {
             />
           </div>
 
+          {/* Input untuk Password */}
           <div className="mb-4">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Kata Sandi
@@ -85,7 +121,7 @@ const Register = () => {
             <input
               type="password"
               id="password"
-              name="password"
+              name="password" // Pastikan nama ini cocok dengan field di formData
               value={formData.password}
               onChange={handleChange}
               className="w-full p-2 mt-1 border rounded-md"
@@ -93,6 +129,7 @@ const Register = () => {
             />
           </div>
 
+          {/* Input untuk Konfirmasi Password */}
           <div className="mb-4">
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
               Konfirmasi Kata Sandi
@@ -100,7 +137,7 @@ const Register = () => {
             <input
               type="password"
               id="confirmPassword"
-              name="confirmPassword"
+              name="confirmPassword" // Pastikan nama ini cocok dengan field di formData
               value={formData.confirmPassword}
               onChange={handleChange}
               className="w-full p-2 mt-1 border rounded-md"
@@ -123,7 +160,7 @@ const Register = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Register
+export default Register;
