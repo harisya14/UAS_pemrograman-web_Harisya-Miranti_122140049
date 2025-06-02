@@ -63,7 +63,7 @@ class MenuMakan(Base):
 
         return {
             'id': self.id,
-            'kategori': self.kategori, # Anda punya kolom 'kategori' di presentasi, tapi tidak di code yang Anda berikan. Saya asumsikan ada.
+            # 'kategori': self.kategori, # Anda punya kolom 'kategori' di presentasi, tapi tidak di code yang Anda berikan. Saya asumsikan ada.
             'user_id': self.user_id,
             'hari': self.hari,
             'waktu_makan': self.waktu_makan,

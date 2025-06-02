@@ -48,3 +48,7 @@ def includeme(config):
     # GET /menus/user/{user_id} - Mengambil menu makan berdasarkan user ID
     config.add_route('get_menu_makans_by_user', '/menus/user/{user_id}', request_method='GET')
     # --- AKHIR ROUTE UNTUK MENU MAKAN ---
+
+    config.add_route('register', '/register')
+    config.add_route('login', '/login')
+    config.add_route('logout', '/logout')

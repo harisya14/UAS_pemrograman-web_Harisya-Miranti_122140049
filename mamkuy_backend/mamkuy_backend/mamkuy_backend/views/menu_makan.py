@@ -26,7 +26,7 @@ def get_menu_makan_by_id_view(request): # Ubah nama fungsi agar lebih deskriptif
     menu_id = request.matchdict.get('id')
     # Gunakan DBSession.query().get() atau filter_by().first() jika DBSession.get() tidak berfungsi
     # menu = DBSession.get(MenuMakan, menu_id) # DBSession.get() adalah metode yang lebih baru
-    menu = DBSession.query(MenuMakan).filter_by(id=menu_id).first()
+    menu = request.dbsession.query(MenuMakan).filter_by(id=menu_id).first()
 
     if menu is None:
         request.response.status_code = 404 # Mengatur status HTTP response
@@ -47,26 +47,39 @@ def get_menu_makans_by_user_view(request): # Ubah nama fungsi agar lebih deskrip
         request.response.status_code = 400
         return {"error": "User ID tidak valid."}
 
-    menus = DBSession.query(MenuMakan).filter_by(user_id=user_id).all()
+    menus = request.dbsession.query(MenuMakan).filter_by(user_id=user_id).all()
     return menus_schema.dump(menus)
 
 # --- CREATE MENU ---
 @view_config(route_name='create_menu_makan', renderer='json', request_method='POST')
-def create_menu_makan_view(request): # Ubah nama fungsi agar lebih deskriptif
+def create_menu_makan_view(request):
     """
     Membuat entri MenuMakan baru.
     """
     try:
+        # Tampilkan payload untuk debugging
+        print("Payload diterima:", request.json_body)
+
         # Validasi input menggunakan schema
         validated_data = menu_schema.load(request.json_body)
-    except Exception as e: # Tangani error validasi Marshmallow
+
+        print("Validated Data:", validated_data)  # Log data setelah validasi
+
+        menu = MenuMakan(**validated_data)
+        request.dbsession.add(menu)
+        request.dbsession.flush()
+
+        return menu_schema.dump(menu)
+
+    except Exception as e:
+        print("Error saat membuat menu makan:", str(e))
         request.response.status_code = 400
         return {"error": "Data input tidak valid", "details": str(e)}
 
     # Buat objek MenuMakan dari data yang divalidasi
     menu = MenuMakan(**validated_data)
-    DBSession.add(menu)
-    DBSession.flush() # Flush untuk mendapatkan ID jika diperlukan segera
+    request.dbsession.add(menu)
+    request.dbsession.flush() # Flush untuk mendapatkan ID jika diperlukan segera
     return menu_schema.dump(menu)
 
 # --- UPDATE MENU ---

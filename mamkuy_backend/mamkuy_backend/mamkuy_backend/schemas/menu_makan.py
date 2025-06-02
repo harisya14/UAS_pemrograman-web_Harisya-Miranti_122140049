@@ -4,7 +4,7 @@ from marshmallow import Schema, fields
 
 class MenuMakanSchema(Schema):
     id = fields.Int(dump_only=True)
-    kategori = fields.Str(required=True)  # Sesuai dengan entitas Menu Makan di presentasi
+    # kategori = fields.Str(required=True)  # Sesuai dengan entitas Menu Makan di presentasi
     user_id = fields.Int(required=True)   # Foreign Key ke User
     hari = fields.Str(required=True)
     waktu_makan = fields.Str(required=True) # "breakfast", "lunch", "dinner"

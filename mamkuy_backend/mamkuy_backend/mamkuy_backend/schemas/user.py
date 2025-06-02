@@ -5,6 +5,3 @@ class UserSchema(Schema):
     username = fields.Str(required=True)
     email = fields.Email(required=True) # <--- TAMBAHKAN BARIS INI
     password = fields.Str(required=True, load_only=True)
-
-user_schema = UserSchema()
-users_schema = UserSchema(many=True)

@@ -1,86 +1,82 @@
-import React from 'react'
-import { useParams } from 'react-router-dom'
+// src/pages/RecipeDetail.jsx
 
-// Contoh data resep sementara (mock data)
-const mockRecipes = [
-  {
-    id: 1,
-    nama_resep: 'Nasi Goreng',
-    kategori: 'Makanan Utama',
-    bahan: ['Nasi', 'Telur', 'Kecap', 'Bawang Merah', 'Bawang Putih'],
-    langkah_memasak: [
-      'Panaskan minyak di wajan.',
-      'Tumis bawang merah dan bawang putih.',
-      'Masukkan telur, aduk hingga matang.',
-      'Tambahkan nasi dan kecap, aduk rata.',
-    ],
-    gambar: '/images/nasi goreng.jpg',
-  },
-  {
-    id: 2,
-    nama_resep: 'Mie Goreng',
-    kategori: 'Makanan Utama',
-    bahan: ['Mie', 'Kecap', 'Bawang Putih', 'Ketumbar'],
-    langkah_memasak: [
-      'Rebus mie.',
-      'Angkat dan tiriskan mie.',
-      'Tumis bawang merah dan bawang putih.',
-      'Masukkan mie kedalam tumisan bumbu.',
-      'Tambahkan kecap, aduk hingga rata',
-    ],
-    gambar: '/images/mie goreng.jpg',
-  },
-  {
-    id: 3,
-    nama_resep: 'Ayam Bakar',
-    kategori: 'Makanan Utama',
-    bahan: ['Ayam', 'Bumbu Kecap', 'Bawang Putih', 'Ketumbar'],
-    langkah_memasak: [
-      'Lumuri ayam dengan bumbu.',
-      'Diamkan selama 30 menit.',
-      'Bakar ayam di atas bara api atau teflon.',
-    ],
-    gambar: '/images/ayam bakar.jpg',
-  },
-]
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import resepService from '../services/resepService';
 
 const RecipeDetail = () => {
-  const { id } = useParams()
-  const recipe = mockRecipes.find((item) => item.id === parseInt(id))
+  const { id } = useParams(); // Ambil ID dari URL
+  const [recipe, setRecipe] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchRecipe = async () => {
+      try {
+        const data = await resepService.getResepById(id);
+        setRecipe(data);
+      } catch (err) {
+        console.error('Gagal mengambil detail resep:', err);
+        setError('Gagal memuat detail resep.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipe();
+  }, [id]);
+
+  if (loading) {
+    return <div className="text-center mt-8">Memuat detail resep...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center mt-8">{error}</div>;
+  }
 
   if (!recipe) {
-    return <p>Resep tidak ditemukan.</p>
+    return <div className="text-center mt-8">Resep tidak ditemukan.</div>;
   }
 
   return (
     <div className="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-6">
       <h2 className="text-2xl font-bold mb-4">{recipe.nama_resep}</h2>
+
+      {/* Gambar resep */}
       <img
         src={recipe.gambar}
         alt={recipe.nama_resep}
         className="w-full h-64 object-cover rounded mb-4"
       />
+
+      {/* Kategori */}
       <p className="mb-2">
-        <strong>Kategori:</strong> {recipe.kategori}
+        <strong>Kategori:</strong> {recipe.kategori || 'Tidak ada kategori'}
       </p>
+
+      {/* Bahan-bahan */}
       <div className="mb-4">
         <h3 className="font-semibold">Bahan-bahan:</h3>
-        <ul className="list-disc list-inside">
-          {recipe.bahan.map((bahan, index) => (
-            <li key={index}>{bahan}</li>
-          ))}
+        <ul className="list-disc list-inside pl-4">
+          {Array.isArray(recipe.bahan)
+            ? recipe.bahan.map((bahan, index) => <li key={index}>{bahan}</li>)
+            : <li>{recipe.bahan}</li>
+          }
         </ul>
       </div>
+
+      {/* Langkah Memasak */}
       <div>
         <h3 className="font-semibold">Langkah Memasak:</h3>
-        <ol className="list-decimal list-inside">
-          {recipe.langkah_memasak.map((langkah, index) => (
-            <li key={index}>{langkah}</li>
-          ))}
+        <ol className="list-decimal list-inside pl-4">
+          {Array.isArray(recipe.langkah_pembuatan)
+            ? recipe.langkah_pembuatan.map((langkah, index) => <li key={index}>{langkah}</li>)
+            : <li>{recipe.langkah_pembuatan}</li>
+          }
         </ol>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default RecipeDetail
+export default RecipeDetail;
