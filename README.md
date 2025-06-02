@@ -76,6 +76,32 @@ Mam Kuy menawarkan solusi praktis:
 - **Context API** - Manajemen state global
 - **TailwindCSS** - Styling responsif
 
+## 📦 Dependensi & Instalasi
+
+###🔧 Frontend
+Masuk ke folder frontend, lalu jalankan:
+- **npm install**
+- **npm run dev**
+
+### Dependensi utama:
+- react
+- react-dom
+- react-router-dom
+- axios
+- tailwindcss
+
+### 🔧 Backend
+Masuk ke folder backend (mamkuy_backend/) dan jalankan:
+**pip install -r requirements.txt**
+
+### Dependensi utama:
+- pyramid
+- sqlalchemy
+- psycopg2-binary
+- alembic
+- marshmallow
+- pyramid_jwt
+
 ## Link Repository Github
 
 ### https://github.com/harisya14/UAS_pemrograman-web_Harisya-Miranti_122140049 
