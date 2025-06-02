@@ -78,7 +78,7 @@ Mam Kuy menawarkan solusi praktis:
 
 ## 📦 Dependensi & Instalasi
 
-###🔧 Frontend
+### 🔧 Frontend
 Masuk ke folder frontend, lalu jalankan:
 - **npm install**
 - **npm run dev**
